@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"strings"
 
 	"github.com/go-redis/redis/v8"
 )
@@ -45,7 +46,7 @@ func main() {
 		DB:   0,
 	})
 
-	// Iterate through the data and push it to Redis
+	// Iterate through the data and push it to Redis as strings
 	for _, obj := range dataObjects {
 		// Convert the object to JSON
 		jsonStr, err := json.Marshal(obj)
@@ -57,10 +58,10 @@ func main() {
 		ctx := context.Background()
 
 		fmt.Println(string(jsonStr))
-		// Push the JSON data to Redis
-		err = rdb.LPush(ctx, "sp_"+obj.Geo+"_"+obj.SellerID, jsonStr).Err()
+		// Set the JSON data as a string in Redis with a unique key
+		err = rdb.Set(ctx, "sp_"+strings.ToLower(obj.Geo)+"_"+obj.SellerID, jsonStr, 0).Err()
 		if err != nil {
-			log.Printf("Error pushing to Redis: %v", err)
+			log.Printf("Error setting data in Redis: %v", err)
 		}
 	}
 
@@ -70,5 +71,5 @@ func main() {
 		log.Fatalf("Error closing Redis client: %v", err)
 	}
 
-	fmt.Println("Data pushed to Redis successfully.")
+	fmt.Println("Data pushed to Redis as strings successfully.")
 }
